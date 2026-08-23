@@ -10,12 +10,13 @@ import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import StatCard from "./components/StatCard";
 import TaskList from "./components/TaskList";
+import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 
 import "./App.css";
 
 function App() {
   const [showAddTask, setShowAddTask] = useState(false);
-
+  const [taskToDelete, setTaskToDelete] = useState(null);
   const [tasks, setTasks] = useState([
     {
       id: 1,
@@ -64,6 +65,22 @@ function App() {
     );
   }
 
+  function handleDeleteTask(id) {
+    setTaskToDelete(id);
+  }
+
+  function confirmDeleteTask() {
+    setTasks((currentTasks) =>
+      currentTasks.filter((task) => task.id !==   taskToDelete)
+    );
+
+    setTaskToDelete(null);
+  }
+
+  function cancelDeleteTask() {
+    setTaskToDelete(null);
+  }
+
   return (
     <div className="app">
       <Sidebar />
@@ -95,6 +112,7 @@ function App() {
           tasks={tasks}
           onAddTask={() => setShowAddTask(true)}
           onToggleTask={handleToggleTask}
+          onDeleteTask={handleDeleteTask}
         />
       </main>
 
@@ -102,6 +120,19 @@ function App() {
         <AddTaskModal
           onClose={() => setShowAddTask(false)}
           onAddTask={handleAddTask}
+        />
+      )}
+
+      {showAddTask && (
+        <AddTaskModal
+          onClose={() => setShowAddTask(false)}
+          onAddTask={handleAddTask}
+        />
+      )}
+      {taskToDelete !== null && (
+        <ConfirmDeleteModal
+          onConfirm={confirmDeleteTask}
+          onCancel={cancelDeleteTask}
         />
       )}
     </div>

@@ -1,6 +1,11 @@
-import { Check, Clock } from "lucide-react";
+import { Check, Clock, Pencil, Trash2 } from "lucide-react";
 
-function TaskList({ tasks, onAddTask, onToggleTask }) {
+function TaskList({
+  tasks,
+  onAddTask,
+  onToggleTask,
+  onDeleteTask,
+  }) {
   return (
     <section className="tasks-section">
       <div className="section-header">
@@ -42,6 +47,15 @@ function TaskList({ tasks, onAddTask, onToggleTask }) {
                   {task.time}
                 </span>
               </div>
+            </div>
+            <div className="task-actions">
+              <button
+                className="task-action-button"
+                onClick={() => onDeleteTask(task.id)}
+                title="Delete task"
+              >
+                <Trash2 size={16} />
+              </button>
             </div>
           </div>
         ))}
