@@ -1,28 +1,46 @@
 import { X } from "lucide-react";
 
-function AddTaskModal({ onClose, onAddTask }) {
+function AddTaskModal({
+    task,
+    onClose,
+    onAddTask,
+    onUpdateTask,
+  }) {
   function handleSubmit(event) {
-    event.preventDefault();
+  event.preventDefault();
 
-    const formData = new FormData(event.target);
+  const formData = new FormData(event.target);
 
-    const newTask = {
-        title: formData.get("title"),
-        category: formData.get("category"),
-        time: formData.get("time"),
-        completed: false,
+  const taskData = {
+      title: formData.get("title"),
+      category: formData.get("category"),
+      time: formData.get("time"),
     };
 
-  onAddTask(newTask);
-}
+    if (task) {
+      onUpdateTask({
+        ...task,
+        ...taskData,
+      });
+    } else {
+      onAddTask({
+        ...taskData,
+        completed: false,
+      });
+    }
+  }
 
   return (
     <div className="modal-overlay">
       <div className="modal">
         <div className="modal-header">
           <div>
-            <h2>Add New Task</h2>
-            <p>Create a task to stay organized.</p>
+            <h2>{task ? "Edit Task" : "Add New Task"}</h2>
+            <p>
+              {task
+              ? "Update the details of your task."
+              : "Create a task to stay organized."}
+            </p>
           </div>
 
           <button className="close-button" onClick={onClose}>
@@ -38,6 +56,7 @@ function AddTaskModal({ onClose, onAddTask }) {
               name="title"
               type="text"
               placeholder="e.g. Practice DSA"
+              defaultValue={task?.title || ""}
               required
             />
           </div>
@@ -46,7 +65,11 @@ function AddTaskModal({ onClose, onAddTask }) {
             <div className="form-group">
               <label htmlFor="task-category">Category</label>
 
-              <select id="task-category" name="category" defaultValue="Study">
+              <select
+                id="task-category"
+                name="category"
+                defaultValue={task?.category || "Study"}
+              >
                 <option value="Study">Study</option>
                 <option value="Work">Work</option>
                 <option value="Personal">Personal</option>
@@ -60,6 +83,7 @@ function AddTaskModal({ onClose, onAddTask }) {
                 id="task-time"
                 name="time"
                 type="time"
+                defaultValue={task?.time || ""}
                 required
               />
             </div>
@@ -74,8 +98,8 @@ function AddTaskModal({ onClose, onAddTask }) {
               Cancel
             </button>
 
-            <button type="submit" className="submit-button">
-              Add Task
+            <button type="submit"                   className="submit-button">
+              {task ? "Save Changes" : "Add Task"}
             </button>
           </div>
         </form>

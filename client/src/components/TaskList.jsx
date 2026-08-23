@@ -5,6 +5,7 @@ function TaskList({
   onAddTask,
   onToggleTask,
   onDeleteTask,
+  onEditTask,
   }) {
   return (
     <section className="tasks-section">
@@ -44,11 +45,21 @@ function TaskList({
 
                 <span>
                   <Clock size={14} />
-                  {task.time}
+                  {new Date(`1970-01-01T${task.time}`).toLocaleTimeString([], {
+                    hour: "numeric",
+                    minute: "2-digit",
+                  })}
                 </span>
               </div>
             </div>
             <div className="task-actions">
+                <button
+                  className="task-action-button"
+                  onClick={() => onEditTask(task)}
+                  title="Edit task"
+                >
+                  <Pencil size={16} />
+                </button>
               <button
                 className="task-action-button"
                 onClick={() => onDeleteTask(task.id)}

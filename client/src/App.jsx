@@ -17,25 +17,26 @@ import "./App.css";
 function App() {
   const [showAddTask, setShowAddTask] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
+  const [taskToEdit, setTaskToEdit] = useState(null);
   const [tasks, setTasks] = useState([
     {
       id: 1,
       title: "Practice DSA",
-      time: "10:00 AM",
+      time: "10:00",
       category: "Study",
       completed: false,
     },
     {
       id: 2,
       title: "Work on TaskFlow",
-      time: "2:00 PM",
+      time: "14:00",
       category: "Work",
       completed: false,
     },
     {
       id: 3,
       title: "Submit assignment",
-      time: "5:00 PM",
+      time: "17:00",
       category: "Study",
       completed: true,
     },
@@ -81,6 +82,22 @@ function App() {
     setTaskToDelete(null);
   }
 
+  function handleEditTask(task) {
+    setTaskToEdit(task);
+  }
+
+  function handleUpdateTask(updatedTask) {
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === updatedTask.id
+          ? updatedTask
+          : task
+      )
+    );
+
+  setTaskToEdit(null);
+}
+
   return (
     <div className="app">
       <Sidebar />
@@ -113,22 +130,24 @@ function App() {
           onAddTask={() => setShowAddTask(true)}
           onToggleTask={handleToggleTask}
           onDeleteTask={handleDeleteTask}
+          onEditTask={handleEditTask}
         />
       </main>
 
       {showAddTask && (
-        <AddTaskModal
-          onClose={() => setShowAddTask(false)}
-          onAddTask={handleAddTask}
-        />
-      )}
+          <AddTaskModal
+            onClose={() => setShowAddTask(false)}
+            onAddTask={handleAddTask}
+          />
+        )}
 
-      {showAddTask && (
-        <AddTaskModal
-          onClose={() => setShowAddTask(false)}
-          onAddTask={handleAddTask}
-        />
-      )}
+        {taskToEdit && (
+          <AddTaskModal
+            task={taskToEdit}
+            onClose={() => setTaskToEdit(null)}
+            onUpdateTask={handleUpdateTask}
+          />
+        )}
       {taskToDelete !== null && (
         <ConfirmDeleteModal
           onConfirm={confirmDeleteTask}
