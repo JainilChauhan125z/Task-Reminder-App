@@ -3,7 +3,16 @@ import {
   Clock,
   CheckCircle2,
 } from "lucide-react";
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  updateDoc,
+  deleteDoc,
+  doc,
+  query,
+  where,
+} from "firebase/firestore";
 import { db } from "./firebase/firebase";
 import { useEffect, useState } from "react";
 import AddTaskModal from "./components/AddTaskModal";
@@ -14,7 +23,13 @@ import TaskList from "./components/TaskList";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
 import TasksPage from "./components/TasksPage";
 
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "./firebase/firebase";
+import Login from "./components/Login";
+import Register from "./components/Register";
+
 import "./App.css";
+import "./Auth.css";
 
 function App() {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -23,27 +38,32 @@ function App() {
   const [taskToEdit, setTaskToEdit] = useState(null);
   const [tasks, setTasks] = useState([]);
 
-  async function testFirebase() {
-    try {
-      const docRef = await addDoc(collection(db, "tasks"), {
-        title: "Firebase Test Task",
-        category: "Study",
-        time: "12:00 PM",
-        completed: false,
-      });
+  // Auth States
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [authPage, setAuthPage] = useState('login');
 
-      console.log("Task added with ID:", docRef.id);
-    } catch (error) {
-      console.error("Firebase error:", error);
-    }
-  }
+  // Auth listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth,  (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
-    async function fetchTasks() {
+  if (!user) return;
+
+  async function fetchTasks() {
       try {
-        const querySnapshot = await getDocs(
-          collection(db, "tasks")
+        const tasksQuery = query(
+          collection(db, "tasks"),
+          where("userId", "==", user.uid)
         );
+
+        const querySnapshot = await getDocs(tasksQuery);
 
         const fetchedTasks = querySnapshot.docs.map((doc) => ({
           id: doc.id,
@@ -58,16 +78,24 @@ function App() {
       }
     }
 
-  fetchTasks();
-}, []);
+    fetchTasks();
+  }, [user]);
 
   async function handleAddTask(newTask) {
     try {
-      const docRef = await addDoc(collection(db, "tasks"), newTask);
+      const taskData = {
+        ...newTask,
+        userId: user.uid,
+      };
+
+      const docRef = await addDoc(
+        collection(db, "tasks"),
+        taskData
+      );
 
       const taskWithId = {
         id: docRef.id,
-        ...newTask,
+        ...taskData,
       };
 
       setTasks((currentTasks) => [
@@ -153,12 +181,24 @@ function App() {
     setTaskToEdit(null);
   }
 
+  if (authLoading) {
+    return <div className="loading-container">Loading TaskFlow...</div>;
+  }
+
+  if (!user) {
+    return authPage === 'login' ? (
+      <Login onSwitchToRegister={() => setAuthPage('register')} />
+    ) : (
+      <Register onSwitchToLogin={() => setAuthPage('login')} />
+    );
+  }
+
   return (
     <div className="app">
       <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
 
       <main className="main-content">
-        <Navbar />
+        <Navbar user={user} />
 
         {currentPage === 'dashboard' ? (
           <>
@@ -181,10 +221,6 @@ function App() {
                 icon={CheckCircle2}
               />
             </section>
-
-            <button onClick={testFirebase}>
-              Test Firebase
-            </button>
 
             <TaskList
               tasks={tasks}

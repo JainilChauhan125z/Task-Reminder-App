@@ -1,11 +1,13 @@
-import { Search, Bell, User } from "lucide-react";
+import { Search, Bell, LogOut } from "lucide-react";
+import { signOut } from "firebase/auth";
+import { auth } from "../firebase/firebase";
 
-function Navbar() {
+function Navbar({ user }) {
   return (
     <header className="navbar">
       <div>
         <h1>Dashboard</h1>
-        <p>Welcome back, Jainil 👋</p>
+        <p>Welcome back, {user?.email || "User"} 👋</p>
       </div>
 
       <div className="navbar-actions">
@@ -17,8 +19,12 @@ function Navbar() {
           <Bell size={19} />
         </button>
 
-        <button className="profile-button">
-          <User size={18} />
+        <button 
+          className="icon-button" 
+          onClick={() => signOut(auth)} 
+          title="Log Out"
+        >
+          <LogOut size={18} />
         </button>
       </div>
     </header>
