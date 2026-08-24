@@ -9,7 +9,7 @@ import {
   Settings,
 } from "lucide-react";
 
-function Sidebar() {
+function Sidebar({ currentPage, onNavigate }) {
   return (
     <aside className="sidebar">
       <div className="sidebar-logo">
@@ -20,12 +20,26 @@ function Sidebar() {
       <nav className="sidebar-nav">
         <p className="nav-title">MENU</p>
 
-        <a href="#" className="nav-item active">
+        <a
+          href="#"
+          className={`nav-item ${currentPage === 'dashboard' ? 'active' : ''}`}
+          onClick={(e) => {
+            e.preventDefault();
+            onNavigate('dashboard');
+          }}
+        >
           <LayoutDashboard size={19} />
           <span>Dashboard</span>
         </a>
 
-        <a href="#" className="nav-item">
+        <a
+          href="#"
+          className={`nav-item ${currentPage === 'tasks' ? 'active' : ''}`}
+          onClick={(e) => {
+            e.preventDefault();
+            onNavigate('tasks');
+          }}
+        >
           <CheckSquare size={19} />
           <span>Tasks</span>
         </a>

@@ -6,13 +6,16 @@ function TaskList({
   onToggleTask,
   onDeleteTask,
   onEditTask,
-  }) {
+  title = "Today's Tasks",
+  subtitle = "Stay on top of what needs to be done.",
+  children
+}) {
   return (
     <section className="tasks-section">
       <div className="section-header">
         <div>
-          <h2>Today's Tasks</h2>
-          <p>Stay on top of what needs to be done.</p>
+          <h2>{title}</h2>
+          <p>{subtitle}</p>
         </div>
 
         <button
@@ -23,9 +26,17 @@ function TaskList({
         </button>
       </div>
 
+      {children}
+
       <div className="task-list">
-        {tasks.map((task) => (
-        <div className="task-item" key={task.id}>
+        {tasks.length === 0 ? (
+          <div className="empty-state">
+            <p className="empty-title">No tasks found</p>
+            <p className="empty-subtitle">Try changing your search or filters.</p>
+          </div>
+        ) : (
+          tasks.map((task) => (
+            <div className="task-item" key={task.id}>
             <button
               className={`task-check ${
                 task.completed ? "completed" : ""
@@ -68,8 +79,9 @@ function TaskList({
                 <Trash2 size={16} />
               </button>
             </div>
-          </div>
-        ))}
+            </div>
+          ))
+        )}
       </div>
     </section>
   );

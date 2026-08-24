@@ -3,77 +3,121 @@ import {
   Clock,
   CheckCircle2,
 } from "lucide-react";
-
-import { useState } from "react";
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "firebase/firestore";
+import { db } from "./firebase/firebase";
+import { useEffect, useState } from "react";
 import AddTaskModal from "./components/AddTaskModal";
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
 import StatCard from "./components/StatCard";
 import TaskList from "./components/TaskList";
 import ConfirmDeleteModal from "./components/ConfirmDeleteModal";
+import TasksPage from "./components/TasksPage";
 
 import "./App.css";
 
 function App() {
+  const [currentPage, setCurrentPage] = useState('dashboard');
   const [showAddTask, setShowAddTask] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState(null);
   const [taskToEdit, setTaskToEdit] = useState(null);
-  const [tasks, setTasks] = useState([
-    {
-      id: 1,
-      title: "Practice DSA",
-      time: "10:00",
-      category: "Study",
-      completed: false,
-    },
-    {
-      id: 2,
-      title: "Work on TaskFlow",
-      time: "14:00",
-      category: "Work",
-      completed: false,
-    },
-    {
-      id: 3,
-      title: "Submit assignment",
-      time: "17:00",
-      category: "Study",
-      completed: true,
-    },
-  ]);
+  const [tasks, setTasks] = useState([]);
 
-  function handleAddTask(newTask) {
-    const taskWithId = {
-      ...newTask,
-      id: Date.now(),
-    };
-  
-    setTasks((currentTasks) => [
-      ...currentTasks,
-      taskWithId,
-    ]);
-  
-    setShowAddTask(false);
+  async function testFirebase() {
+    try {
+      const docRef = await addDoc(collection(db, "tasks"), {
+        title: "Firebase Test Task",
+        category: "Study",
+        time: "12:00 PM",
+        completed: false,
+      });
+
+      console.log("Task added with ID:", docRef.id);
+    } catch (error) {
+      console.error("Firebase error:", error);
+    }
   }
 
-  function handleToggleTask(id) {
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === id
-          ? { ...task, completed: !task.completed }
-          : task
-      )
-    );
+  useEffect(() => {
+    async function fetchTasks() {
+      try {
+        const querySnapshot = await getDocs(
+          collection(db, "tasks")
+        );
+
+        const fetchedTasks = querySnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setTasks(fetchedTasks);
+
+        console.log("Tasks fetched:", fetchedTasks);
+      } catch (error) {
+        console.error("Error fetching tasks:", error);
+      }
+    }
+
+  fetchTasks();
+}, []);
+
+  async function handleAddTask(newTask) {
+    try {
+      const docRef = await addDoc(collection(db, "tasks"), newTask);
+
+      const taskWithId = {
+        id: docRef.id,
+        ...newTask,
+      };
+
+      setTasks((currentTasks) => [
+        ...currentTasks,
+        taskWithId,
+      ]);
+
+      setShowAddTask(false);
+    } catch (error) {
+      console.error("Error adding task:", error);
+    }
+  }
+
+  async function handleToggleTask(id) {
+    const taskToToggle = tasks.find((t) => t.id === id);
+    if (!taskToToggle) return;
+
+    try {
+      const taskDocRef = doc(db, "tasks", id);
+      await updateDoc(taskDocRef, {
+        completed: !taskToToggle.completed,
+      });
+      setTasks((currentTasks) =>
+        currentTasks.map((task) =>
+          task.id === id
+            ? { ...task, completed: !task.completed }
+            : task
+        )
+      );
+    } catch (error) {
+      console.error("Error toggling task completion:", error);
+    }
   }
 
   function handleDeleteTask(id) {
     setTaskToDelete(id);
   }
 
-  function confirmDeleteTask() {
-    setTasks((currentTasks) =>
-      currentTasks.filter((task) => task.id !==   taskToDelete)
-    );
+  async function confirmDeleteTask() {
+    if (!taskToDelete) return;
+
+    try {
+      await deleteDoc(doc(db, "tasks", taskToDelete));
+      
+      setTasks((currentTasks) =>
+        currentTasks.filter((task) => task.id !== taskToDelete)
+      );
+    } catch (error) {
+      console.error("Error deleting task:", error);
+    }
 
     setTaskToDelete(null);
   }
@@ -86,52 +130,79 @@ function App() {
     setTaskToEdit(task);
   }
 
-  function handleUpdateTask(updatedTask) {
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === updatedTask.id
-          ? updatedTask
-          : task
-      )
-    );
+  async function handleUpdateTask(updatedTask) {
+    try {
+      const taskDocRef = doc(db, "tasks", updatedTask.id);
+      await updateDoc(taskDocRef, {
+        title: updatedTask.title,
+        category: updatedTask.category,
+        time: updatedTask.time,
+      });
 
-  setTaskToEdit(null);
-}
+      setTasks((currentTasks) =>
+        currentTasks.map((task) =>
+          task.id === updatedTask.id
+            ? updatedTask
+            : task
+        )
+      );
+    } catch (error) {
+      console.error("Error updating task:", error);
+    }
+
+    setTaskToEdit(null);
+  }
 
   return (
     <div className="app">
-      <Sidebar />
+      <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
 
       <main className="main-content">
         <Navbar />
 
-        <section className="stats-grid">
-          <StatCard
-            title="Total Tasks"
-            value={tasks.length}
-            icon={CheckSquare}
-          />
+        {currentPage === 'dashboard' ? (
+          <>
+            <section className="stats-grid">
+              <StatCard
+                title="Total Tasks"
+                value={tasks.length}
+                icon={CheckSquare}
+              />
 
-          <StatCard
-            title="Due Today"
-            value={tasks.length}
-            icon={Clock}
-          />
+              <StatCard
+                title="Due Today"
+                value={tasks.length}
+                icon={Clock}
+              />
 
-          <StatCard
-            title="Completed"
-            value={tasks.filter((task) => task.completed).length}
-            icon={CheckCircle2}
-          />
-        </section>
+              <StatCard
+                title="Completed"
+                value={tasks.filter((task) => task.completed).length}
+                icon={CheckCircle2}
+              />
+            </section>
 
-        <TaskList
-          tasks={tasks}
-          onAddTask={() => setShowAddTask(true)}
-          onToggleTask={handleToggleTask}
-          onDeleteTask={handleDeleteTask}
-          onEditTask={handleEditTask}
-        />
+            <button onClick={testFirebase}>
+              Test Firebase
+            </button>
+
+            <TaskList
+              tasks={tasks}
+              onAddTask={() => setShowAddTask(true)}
+              onToggleTask={handleToggleTask}
+              onDeleteTask={handleDeleteTask}
+              onEditTask={handleEditTask}
+            />
+          </>
+        ) : (
+          <TasksPage
+            tasks={tasks}
+            onAddTask={() => setShowAddTask(true)}
+            onToggleTask={handleToggleTask}
+            onDeleteTask={handleDeleteTask}
+            onEditTask={handleEditTask}
+          />
+        )}
       </main>
 
       {showAddTask && (
