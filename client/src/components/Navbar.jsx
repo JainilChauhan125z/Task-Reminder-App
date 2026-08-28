@@ -1,13 +1,18 @@
-import { Search, Bell, LogOut } from "lucide-react";
+import { Search, Bell, LogOut, Menu } from "lucide-react";
 import { signOut } from "firebase/auth";
 import { auth } from "../firebase/firebase";
 
-function Navbar({ user }) {
+function Navbar({ user, onMenuClick }) {
   return (
     <header className="navbar">
-      <div>
-        <h1>Dashboard</h1>
-        <p>Welcome back, {user?.email || "User"} 👋</p>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
+        <button className="icon-button menu-button" onClick={onMenuClick} aria-label="Open navigation menu">
+          <Menu size={19} />
+        </button>
+        <div style={{ minWidth: 0 }}>
+          <h1 style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Dashboard</h1>
+          <p style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Welcome back, {user?.email || "User"} 👋</p>
+        </div>
       </div>
 
       <div className="navbar-actions">

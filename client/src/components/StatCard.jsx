@@ -8,8 +8,8 @@ function StatCard({ title, value, icon: Icon = CheckCircle2 }) {
       </div>
 
       <div>
-        <p>{title}</p>
         <h2>{value}</h2>
+        <p>{title}</p>
       </div>
     </div>
   );
